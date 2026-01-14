@@ -1,0 +1,173 @@
+<script>
+        // Sample game history data (in real app, load from localStorage)
+        let gameHistory = [
+            {
+                id: 1,
+                winner: 'tie',
+                playerX: 'Player X',
+                playerO: 'Computer',
+                timestamp: '2026-01-14T11:55:00',
+                mode: 'PvC',
+                difficulty: 'hard',
+                resultText: "It's a tie!"
+            },
+            {
+                id: 2,
+                winner: 'X',
+                playerX: 'Player X',
+                playerO: 'Computer',
+                timestamp: '2026-01-14T11:55:00',
+                mode: 'PvC',
+                difficulty: 'medium',
+                resultText: "Player X (X) wins!"
+            },
+            {
+                id: 3,
+                winner: 'X',
+                playerX: 'Player X',
+                playerO: 'Player O',
+                timestamp: '2026-01-14T11:54:00',
+                mode: 'PvP',
+                difficulty: null,
+                resultText: "Player X (X) wins!"
+            }
+        ];
+
+        // Load from localStorage if available
+        function loadHistory() {
+            const savedHistory = localStorage.getItem('ticTacToeHistory');
+            if (savedHistory) {
+                gameHistory = JSON.parse(savedHistory);
+            }
+            updateStats();
+            renderHistory('all');
+        }
+
+        // Calculate and update statistics
+        function updateStats() {
+            const xWins = gameHistory.filter(game => game.winner === 'X').length;
+            const oWins = gameHistory.filter(game => game.winner === 'O').length;
+            const ties = gameHistory.filter(game => game.winner === 'tie').length;
+            
+            document.getElementById('x-wins-count').textContent = xWins;
+            document.getElementById('o-wins-count').textContent = oWins;
+            document.getElementById('ties-count').textContent = ties;
+        }
+
+        // Format timestamp to readable format
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return {
+                time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                date: date.toISOString().split('T')[0]
+            };
+        }
+
+        // Render history items
+        function renderHistory(filter = 'all') {
+            const historyList = document.getElementById('history-list');
+            
+            // Filter games
+            let filteredGames = gameHistory;
+            if (filter === 'wins') {
+                filteredGames = gameHistory.filter(game => game.winner !== 'tie');
+            } else if (filter === 'ties') {
+                filteredGames = gameHistory.filter(game => game.winner === 'tie');
+            }
+            
+            // Clear current list
+            historyList.innerHTML = '';
+            
+            // Show empty state if no games
+            if (filteredGames.length === 0) {
+                historyList.innerHTML = `
+                    <div class="empty-state">
+                        <div>📊</div>
+                        <p>No games found</p>
+                        <p style="font-size: 14px; margin-top: 8px;">Play some games to see history here!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Add each game to history list
+            filteredGames.forEach(game => {
+                const timeInfo = formatTimestamp(game.timestamp);
+                const modeText = game.difficulty ? `${game.mode} (${game.difficulty})` : game.mode;
+                
+                const historyItem = document.createElement('div');
+                historyItem.className = `history-item ${game.winner === 'X' ? 'x-win' : game.winner === 'O' ? 'o-win' : 'tie'}`;
+                
+                historyItem.innerHTML = `
+                    <div class="game-result ${game.winner === 'X' ? 'x-win' : game.winner === 'O' ? 'o-win' : 'tie'}">
+                        ${game.winner === 'tie' ? '🤝' : game.winner === 'X' ? '❌' : '⭕'}
+                        ${game.resultText}
+                    </div>
+                    <div class="game-meta">
+                        <div class="meta-row">
+                            <span class="timestamp">${timeInfo.time}</span>
+                            <span class="game-mode">${modeText}</span>
+                        </div>
+                        <div class="meta-row">
+                            ${timeInfo.date}
+                        </div>
+                    </div>
+                `;
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        // Filter history based on button click
+        function filterHistory(filter) {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Render filtered history
+            renderHistory(filter);
+        }
+
+        // Clear all history
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all game history?')) {
+                localStorage.removeItem('ticTacToeHistory');
+                gameHistory = [];
+                updateStats();
+                renderHistory('all');
+            }
+        }
+
+        // Save a new game result
+        function saveGameResult(winner, playerX, playerO, mode, difficulty = null) {
+            const gameRecord = {
+                id: Date.now(),
+                winner: winner,
+                playerX: playerX,
+                playerO: playerO,
+                timestamp: new Date().toISOString(),
+                mode: mode,
+                difficulty: difficulty,
+                resultText: winner === 'tie' ? "It's a tie!" : 
+                           winner === 'X' ? `${playerX} (X) wins!` : 
+                           `${playerO} (O) wins!`
+            };
+            
+            gameHistory.unshift(gameRecord); // Add to beginning
+            localStorage.setItem('ticTacToeHistory', JSON.stringify(gameHistory));
+            
+            updateStats();
+            renderHistory(document.querySelector('.filter-btn.active').textContent.toLowerCase());
+        }
+
+        // Initialize
+        loadHistory();
+
+        // Example: Add a new game (for testing)
+        // Uncomment to test adding a new game:
+        // setTimeout(() => {
+        //     saveGameResult('O', 'Player X', 'Computer', 'PvC', 'easy');
+        // }, 2000);
+    </script>
