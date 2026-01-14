@@ -1,173 +1,180 @@
-<script>
-        // Sample game history data (in real app, load from localStorage)
-        let gameHistory = [
-            {
-                id: 1,
-                winner: 'tie',
-                playerX: 'Player X',
-                playerO: 'Computer',
-                timestamp: '2026-01-14T11:55:00',
-                mode: 'PvC',
-                difficulty: 'hard',
-                resultText: "It's a tie!"
-            },
-            {
-                id: 2,
-                winner: 'X',
-                playerX: 'Player X',
-                playerO: 'Computer',
-                timestamp: '2026-01-14T11:55:00',
-                mode: 'PvC',
-                difficulty: 'medium',
-                resultText: "Player X (X) wins!"
-            },
-            {
-                id: 3,
-                winner: 'X',
-                playerX: 'Player X',
-                playerO: 'Player O',
-                timestamp: '2026-01-14T11:54:00',
-                mode: 'PvP',
-                difficulty: null,
-                resultText: "Player X (X) wins!"
-            }
-        ];
+import React, { useState, useEffect } from 'react';
+import './TicTacToeStats.css';
 
-        // Load from localStorage if available
-        function loadHistory() {
-            const savedHistory = localStorage.getItem('ticTacToeHistory');
-            if (savedHistory) {
-                gameHistory = JSON.parse(savedHistory);
-            }
-            updateStats();
-            renderHistory('all');
-        }
+const TicTacToeStats = ({ games = [] }) => {
+  const [filter, setFilter] = useState('all');
+  const [stats, setStats] = useState({
+    xWins: 0,
+    oWins: 0,
+    ties: 0
+  });
 
-        // Calculate and update statistics
-        function updateStats() {
-            const xWins = gameHistory.filter(game => game.winner === 'X').length;
-            const oWins = gameHistory.filter(game => game.winner === 'O').length;
-            const ties = gameHistory.filter(game => game.winner === 'tie').length;
-            
-            document.getElementById('x-wins-count').textContent = xWins;
-            document.getElementById('o-wins-count').textContent = oWins;
-            document.getElementById('ties-count').textContent = ties;
-        }
+  // Sample data matching your image
+  const defaultGames = [
+    {
+      id: 1,
+      winner: 'tie',
+      playerX: 'Player X',
+      playerO: 'Computer',
+      timestamp: '2026-01-14T11:55:00',
+      mode: 'PvC',
+      difficulty: 'hard',
+      resultText: "It's a tie!"
+    },
+    {
+      id: 2,
+      winner: 'X',
+      playerX: 'Player X',
+      playerO: 'Computer',
+      timestamp: '2026-01-14T11:55:00',
+      mode: 'PvC',
+      difficulty: 'medium',
+      resultText: "Player X (X) wins!"
+    },
+    {
+      id: 3,
+      winner: 'X',
+      playerX: 'Player X',
+      playerO: 'Player O',
+      timestamp: '2026-01-14T11:54:00',
+      mode: 'PvP',
+      difficulty: null,
+      resultText: "Player X (X) wins!"
+    }
+  ];
 
-        // Format timestamp to readable format
-        function formatTimestamp(timestamp) {
-            const date = new Date(timestamp);
-            return {
-                time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                date: date.toISOString().split('T')[0]
-            };
-        }
+  // Use provided games or default sample
+  const gameHistory = games.length > 0 ? games : defaultGames;
 
-        // Render history items
-        function renderHistory(filter = 'all') {
-            const historyList = document.getElementById('history-list');
+  // Calculate statistics
+  useEffect(() => {
+    const xWins = gameHistory.filter(game => game.winner === 'X').length;
+    const oWins = gameHistory.filter(game => game.winner === 'O').length;
+    const ties = gameHistory.filter(game => game.winner === 'tie').length;
+    
+    setStats({ xWins, oWins, ties });
+  }, [gameHistory]);
+
+  // Filter games based on selected filter
+  const filteredGames = gameHistory.filter(game => {
+    if (filter === 'all') return true;
+    if (filter === 'wins') return game.winner !== 'tie';
+    if (filter === 'ties') return game.winner === 'tie';
+    return true;
+  });
+
+  // Format timestamp
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = date.toISOString().split('T')[0];
+    return { time, date: dateStr };
+  };
+
+  // Get mode display text
+  const getModeText = (game) => {
+    return game.difficulty ? `${game.mode} (${game.difficulty})` : game.mode;
+  };
+
+  // Get emoji for winner
+  const getWinnerEmoji = (winner) => {
+    switch(winner) {
+      case 'X': return '❌';
+      case 'O': return '⭕';
+      case 'tie': return '🤝';
+      default: return '';
+    }
+  };
+
+  // Clear history function
+  const clearHistory = () => {
+    if (window.confirm('Are you sure you want to clear all game history?')) {
+      // Implement your clear logic here
+      console.log('History cleared');
+    }
+  };
+
+  return (
+    <div className="tic-tac-toe-stats">
+      <h1>Game History</h1>
+      
+      <div className="filter-buttons">
+        <button 
+          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+          onClick={() => setFilter('all')}
+        >
+          All
+        </button>
+        <button 
+          className={`filter-btn ${filter === 'wins' ? 'active' : ''}`}
+          onClick={() => setFilter('wins')}
+        >
+          Wins
+        </button>
+        <button 
+          className={`filter-btn ${filter === 'ties' ? 'active' : ''}`}
+          onClick={() => setFilter('ties')}
+        >
+          Ties
+        </button>
+      </div>
+      
+      <div className="stats-summary">
+        <div className="stat-item x-wins">
+          <div className="stat-count">{stats.xWins}</div>
+          <div className="stat-label">X Wins</div>
+        </div>
+        
+        <div className="stat-item ties">
+          <div className="stat-count">{stats.ties}</div>
+          <div className="stat-label">Ties</div>
+        </div>
+        
+        <div className="stat-item o-wins">
+          <div className="stat-count">{stats.oWins}</div>
+          <div className="stat-label">O Wins</div>
+        </div>
+      </div>
+      
+      <div className="history-list">
+        {filteredGames.length === 0 ? (
+          <div className="empty-state">
+            <p>No games found</p>
+          </div>
+        ) : (
+          filteredGames.map((game) => {
+            const { time, date } = formatTimestamp(game.timestamp);
+            const modeText = getModeText(game);
+            const winnerEmoji = getWinnerEmoji(game.winner);
             
-            // Filter games
-            let filteredGames = gameHistory;
-            if (filter === 'wins') {
-                filteredGames = gameHistory.filter(game => game.winner !== 'tie');
-            } else if (filter === 'ties') {
-                filteredGames = gameHistory.filter(game => game.winner === 'tie');
-            }
-            
-            // Clear current list
-            historyList.innerHTML = '';
-            
-            // Show empty state if no games
-            if (filteredGames.length === 0) {
-                historyList.innerHTML = `
-                    <div class="empty-state">
-                        <div>📊</div>
-                        <p>No games found</p>
-                        <p style="font-size: 14px; margin-top: 8px;">Play some games to see history here!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            // Add each game to history list
-            filteredGames.forEach(game => {
-                const timeInfo = formatTimestamp(game.timestamp);
-                const modeText = game.difficulty ? `${game.mode} (${game.difficulty})` : game.mode;
+            return (
+              <div 
+                key={game.id} 
+                className={`history-item ${game.winner === 'tie' ? 'tie' : 'win'}`}
+              >
+                <div className="game-result">
+                  <span className="winner-emoji">{winnerEmoji}</span>
+                  {game.resultText}
+                </div>
                 
-                const historyItem = document.createElement('div');
-                historyItem.className = `history-item ${game.winner === 'X' ? 'x-win' : game.winner === 'O' ? 'o-win' : 'tie'}`;
-                
-                historyItem.innerHTML = `
-                    <div class="game-result ${game.winner === 'X' ? 'x-win' : game.winner === 'O' ? 'o-win' : 'tie'}">
-                        ${game.winner === 'tie' ? '🤝' : game.winner === 'X' ? '❌' : '⭕'}
-                        ${game.resultText}
-                    </div>
-                    <div class="game-meta">
-                        <div class="meta-row">
-                            <span class="timestamp">${timeInfo.time}</span>
-                            <span class="game-mode">${modeText}</span>
-                        </div>
-                        <div class="meta-row">
-                            ${timeInfo.date}
-                        </div>
-                    </div>
-                `;
-                
-                historyList.appendChild(historyItem);
-            });
-        }
+                <div className="game-meta">
+                  <div className="meta-row">
+                    <span className="time">{time}</span>
+                    <span className="mode">{modeText}</span>
+                  </div>
+                  <div className="date">{date}</div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+      
+      <button className="clear-history-btn" onClick={clearHistory}>
+        Clear History
+      </button>
+    </div>
+  );
+};
 
-        // Filter history based on button click
-        function filterHistory(filter) {
-            // Update active button
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Render filtered history
-            renderHistory(filter);
-        }
-
-        // Clear all history
-        function clearHistory() {
-            if (confirm('Are you sure you want to clear all game history?')) {
-                localStorage.removeItem('ticTacToeHistory');
-                gameHistory = [];
-                updateStats();
-                renderHistory('all');
-            }
-        }
-
-        // Save a new game result
-        function saveGameResult(winner, playerX, playerO, mode, difficulty = null) {
-            const gameRecord = {
-                id: Date.now(),
-                winner: winner,
-                playerX: playerX,
-                playerO: playerO,
-                timestamp: new Date().toISOString(),
-                mode: mode,
-                difficulty: difficulty,
-                resultText: winner === 'tie' ? "It's a tie!" : 
-                           winner === 'X' ? `${playerX} (X) wins!` : 
-                           `${playerO} (O) wins!`
-            };
-            
-            gameHistory.unshift(gameRecord); // Add to beginning
-            localStorage.setItem('ticTacToeHistory', JSON.stringify(gameHistory));
-            
-            updateStats();
-            renderHistory(document.querySelector('.filter-btn.active').textContent.toLowerCase());
-        }
-
-        // Initialize
-        loadHistory();
-
-        // Example: Add a new game (for testing)
-        // Uncomment to test adding a new game:
-        // setTimeout(() => {
-        //     saveGameResult('O', 'Player X', 'Computer', 'PvC', 'easy');
-        // }, 2000);
-    </script>
+export default TicTacToeStats;
